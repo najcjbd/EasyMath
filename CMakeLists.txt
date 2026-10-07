@@ -101,8 +101,11 @@ install(FILES README.md QUICKSTART.md CHANGELOG.md DESTINATION share/doc/EasyMat
 install(FILES packaging/easymath.conf.example DESTINATION share/doc/EasyMath)
 install(FILES packaging/build-windows.sh DESTINATION share/doc/EasyMath)
 # KaTeX 资源(与 Android 端同一份): 导出"自包含 HTML"时内联进报告, 离线也能显示公式
-install(DIRECTORY android/app/src/main/assets/katex DESTINATION share/EasyMath)
-install(FILES android/app/src/main/assets/result.css DESTINATION share/EasyMath)
+# 安卓界面资源: 只有存在 android/ 工程时才装(main 分支是纯电脑版, 没有这个目录)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/android/app/src/main/assets")
+    install(DIRECTORY android/app/src/main/assets/katex DESTINATION share/EasyMath)
+    install(FILES android/app/src/main/assets/result.css DESTINATION share/EasyMath)
+endif()
 install(DIRECTORY tests/ DESTINATION share/EasyMath/tests
         PATTERN "*.tmp" EXCLUDE)
 # 脚本需要可执行位(install(DIRECTORY) 不保留)
