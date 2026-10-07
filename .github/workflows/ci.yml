@@ -22,7 +22,7 @@ jobs:
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j"$(nproc)"
-          cmake --install build
+          sudo cmake --install build
           /opt/EasyMath/bin/EasyMath --version
       - name: Full test suite
         run: bash tests/run_all.sh build/EasyMath
