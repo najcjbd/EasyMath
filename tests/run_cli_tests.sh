@@ -163,7 +163,20 @@ if "$BIN" --engine-info >/dev/null 2>&1; then
   contains "sympy 精确多元解" "√(2)" "$out"
 
   out=$(run --engine=sympy --solve "x^4=5" --real)
-  notcontains "sympy --real 过滤复根" "i" "$out"
+  # 不用"不含字母 i"这种子串断言(任何含 i 的单词都会误判), 改成直接查语义:
+  # 必须恰好给出两个实根, 且不出现虚数单位 i(按词边界匹配)。
+  contains "sympy --real 过滤复根: 负实根" "x_1 = -5^(1/4)" "$out"
+  contains "sympy --real 过滤复根: 正实根" "x_2 = 5^(1/4)" "$out"
+  if printf '%s' "$out" | grep -qE "x_3"; then
+      fail "sympy --real 过滤复根: 不该出现第 3 个根" "输出里出现了 x_3"
+  else
+      ok
+  fi
+  if printf '%s' "$out" | grep -qE '(^|[^0-9A-Za-z_])i([^0-9A-Za-z_]|$)'; then
+      fail "sympy --real 过滤复根: 不该出现虚数单位" "输出里出现了裸的 i"
+  else
+      ok
+  fi
 
   out=$(run --engine=sympy --solve "cos(x)=x")
   contains "sympy 无闭式解回退" "0.73908513" "$out"
