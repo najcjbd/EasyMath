@@ -8,73 +8,54 @@ on:
 
 jobs:
   linux-tests:
-    name: Linux 构建 + 全量测试
+    name: Linux build and tests
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - name: 安装依赖(可选后端 + 测试工具)
+      - name: Install deps
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cmake g++ libgmp-dev libmpfr-dev libmpc-dev python3 python3-pip
-          pip3 install --quiet sympy mpmath
-      - name: 配置与编译
+          pip3 install --quiet --break-system-packages sympy mpmath
+      - name: Build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j"$(nproc)"
           cmake --install build
-      - name: 版本自检
-        run: /opt/EasyMath/bin/EasyMath --version
-      - name: 全量测试套件
+          /opt/EasyMath/bin/EasyMath --version
+      - name: Full test suite
         run: bash tests/run_all.sh build/EasyMath
-      - name: 关键功能抽查
+      - name: Check pi to 100 digits
         run: |
-          build/EasyMath --solve "x^2-2=0" --hide all --show solution | head -5
           build/EasyMath --eval pi --decimals 100 --hide all --show approx
-          python3 - <<'PY'
-          import re, subprocess, mpmath as mp
-          mp.mp.dps = 200
-          out = subprocess.run(["build/EasyMath","--eval","pi","--decimals","100","--hide","all","--show","approx"],
-                               capture_output=True, text=True).stdout
-          d = max(re.findall(r"\d+\.(\d+)", out), key=len)
-          err = abs(mp.mpf("3." + d) - mp.pi)
-          assert err <= mp.mpf("0.5e-100"), f"π 100 位不正确: 误差 {err}"
-          print("π 100 位正确舍入 ✓ 误差", err)
-          PY
+          python3 -c "import re,subprocess,mpmath as mp; mp.mp.dps=200; out=subprocess.run(['build/EasyMath','--eval','pi','--decimals','100','--hide','all','--show','approx'],capture_output=True,text=True).stdout; d=max(re.findall(r'\d+\.(\d+)',out),key=len); err=abs(mp.mpf('3.'+d)-mp.pi); assert err<=mp.mpf('0.5e-100'), err; print('pi 100 digits OK, err=',err)"
 
   windows-build:
-    name: Windows 交叉编译
+    name: Windows cross build
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: 安装 mingw 交叉编译器
+      - name: Install mingw
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cmake g++-mingw-w64-x86-64 zip
-      - name: 交叉编译
+          sudo apt-get install -y -qq cmake g++-mingw-w64-x86-64
+      - name: Cross compile
         run: |
-          cmake -S . -B build-win -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_SYSTEM_NAME=Windows \
-                -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
+          cmake -S . -B build-win -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
           cmake --build build-win -j"$(nproc)"
-          x86_64-w64-mingw32-strip build-win/EasyMath.exe || true
-      - name: 打包与上传
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: EasyMath-windows
-          path: |
-            build-win/EasyMath.exe
+          path: build-win/EasyMath.exe
           if-no-files-found: error
 
   android-apk:
-    name: 安卓 APK(尽力而为)
+    name: Android APK (best effort)
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-    # 说明: 本工程平时在 Termux(aarch64) 上用本地 aapt2 构建, 这里用标准 Android SDK 尝试;
-    # 若环境差异导致失败, 不会阻塞 main 的构建与测试(发行版 APK 仍由本地/Release 提供)。
     continue-on-error: true
-    if: hashFiles('android/build.gradle.kts') != ''
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -83,7 +64,7 @@ jobs:
           java-version: '21'
       - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
-      - name: 组装 Debug APK
+      - name: Assemble debug APK
         working-directory: android
         run: gradle --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
