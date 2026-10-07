@@ -58,3 +58,19 @@ vivo_Sans.zip
 .idea/
 .DS_Store
 Thumbs.db
+
+# ---------- Android 补充(非目录写法也挡一次) ----------
+android/.cxx
+android/app/.cxx
+android/app/release
+android/app/debug
+android/.kotlin
+android/.externalNativeBuild
+android/app/.externalNativeBuild
+android/captures
+*.iml
+*.hprof
+gradle-app.setting
+.kotlin/
+# 但要保留可能需要入库的预编译库
+!android/app/src/main/jniLibs/**/*.so
