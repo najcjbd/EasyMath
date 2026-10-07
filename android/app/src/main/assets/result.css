@@ -1,0 +1,101 @@
+/* EasyMath 结果页样式(WebView 内 + 预览截图共用同一份, 保证"我看到的=手机上的")
+   浅色/深色通过 body.dark 切换; 公式用 KaTeX 渲染。 */
+
+:root {
+    --fg: #14161A;
+    --dim: #6B7280;
+    --line: #E3E6EA;
+    --code-bg: #F3F5F8;
+    --accent: #2F5FE0;
+}
+
+body.dark {
+    --fg: #E8EAED;
+    --dim: #9AA0A6;
+    --line: #2C313A;
+    --code-bg: #23272E;
+    --accent: #8AB0FF;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+body {
+    font-family: -apple-system, "Noto Sans CJK SC", "Source Han Sans SC", "Helvetica Neue", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--fg);
+    padding: 12px 14px 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-user-select: text;
+    user-select: text;
+    overflow-wrap: break-word;
+}
+
+/* 分区标题: 小一号 + 字距, 与正文拉开层次 */
+h3 {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--dim);
+    margin: 18px 0 6px;
+}
+h3:first-child { margin-top: 2px; }
+
+/* 公式: 长公式(多项式/高次根)允许横向滚动, 不裁切 */
+.math {
+    margin: 10px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1px 0 3px;
+}
+.katex-display { margin: 0.35em 0; }
+.katex { font-size: 1.03em; }
+
+/* 纯文本行: 等宽 + 自动换行 */
+.pl {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13.5px;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    margin: 6px 0;
+}
+
+/* 纯文本模式整页 */
+pre {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    background: var(--code-bg);
+    border-radius: 10px;
+    padding: 12px;
+    margin: 0;
+}
+
+/* 空状态 */
+.empty {
+    color: var(--dim);
+    text-align: center;
+    padding: 34px 16px;
+    font-size: 14px;
+    line-height: 1.9;
+}
+.empty b { color: var(--fg); font-weight: 600; }
+.empty .eg {
+    display: inline-block;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--accent);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 3px 9px;
+    margin: 3px 2px;
+}
+
+/* 字形模式的手绘/文字预览(内联 SVG) */
+.glyph-preview{display:flex;justify-content:center;padding:.6em 0;overflow-x:auto}
+.glyph-preview svg{max-width:100%;height:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px}

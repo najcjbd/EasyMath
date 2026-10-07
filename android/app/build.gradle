@@ -1,0 +1,78 @@
+plugins {
+    id 'com.android.application'
+    id 'com.chaquo.python'
+}
+
+android {
+    namespace 'com.easymath.app'
+    compileSdk 36
+    ndkVersion '29.0.14206865'
+
+    defaultConfig {
+        applicationId 'com.easymath.app'
+        minSdk 24
+        targetSdk 36
+        versionCode 63
+        versionName '1.62.0'  // 1.62.0: OTF 全 ASCII 冒烟通过(94 字/3775 段) + mingw 构建修正
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64' }
+
+        // 内嵌 CPython + SymPy: 手机端与桌面端同一个求解引擎
+        python {
+            buildPython '/usr/bin/python3'
+            pip { install 'sympy' }
+        }
+
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_static'
+                cppFlags '-std=c++17', '-O2', '-Wall', '-Wextra'
+            }
+        }
+    }
+    externalNativeBuild { cmake { path file('src/main/cpp/CMakeLists.txt') } }
+    buildTypes { release { minifyEnabled false } }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 保证 Android 端的 SymPy 桥脚本与桌面端同源。
+// 桥脚本只存在于 src/engine.cpp (单一来源), Android 侧是导出后加壳的副本;
+// 以前这一步靠手工执行, 结果 C++ 修了桥脚本而 APK 里还是旧的, 两端行为漂移。
+// 有桌面端二进制就自动重新生成; 没有则明确提示, 不静默使用旧副本。
+// (Gradle 9 起 Task 上不再有 exec(), 用注入的 ExecOperations。)
+// ---------------------------------------------------------------------------
+import org.gradle.process.ExecOperations
+import javax.inject.Inject
+
+abstract class GenPythonBridgeTask extends DefaultTask {
+    @Inject abstract ExecOperations getExecOps()
+
+    @TaskAction
+    void generate() {
+        def rootDir = project.rootDir
+        def bin = new File(rootDir, '../build/EasyMath')
+        def script = new File(rootDir, 'tools/gen_python_module.sh')
+        if (!bin.exists() || !script.exists()) {
+            logger.lifecycle("EasyMath: 未找到桌面端二进制(${bin}), 沿用已提交的桥脚本副本" +
+                             " —— 若刚改过 src/engine.cpp, 请先构建桌面端再打包, 否则两端会不一致")
+            return
+        }
+        def buf = new ByteArrayOutputStream()
+        def res = execOps.exec { spec ->
+            spec.commandLine 'bash', script.absolutePath, bin.absolutePath
+            spec.standardOutput = buf
+            spec.errorOutput = buf
+            spec.ignoreExitValue = true
+        }
+        if (res.exitValue != 0) {
+            throw new GradleException("生成 Python 桥失败(exit ${res.exitValue}):\n${buf}")
+        }
+        logger.lifecycle(buf.toString().trim())
+    }
+}
+
+tasks.register('genPythonBridge', GenPythonBridgeTask)
+tasks.named('preBuild') { dependsOn 'genPythonBridge' }

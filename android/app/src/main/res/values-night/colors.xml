@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 深色主题配色: 避免纯黑(OLED 拖影/对比过强), 用 #101215 底 + 提亮主色 -->
+<resources>
+    <color name="bg">#101215</color>
+    <color name="surface">#191C21</color>
+    <color name="surface_variant">#23272E</color>
+    <color name="text">#E8EAED</color>
+    <color name="text_dim">#9AA0A6</color>
+    <color name="outline">#2C313A</color>
+
+    <color name="primary">#8AB0FF</color>
+    <color name="primary_pressed">#A6C2FF</color>
+    <color name="primary_disabled">#3C4A6B</color>
+    <color name="primary_dark">#6D93E8</color>
+    <color name="on_primary">#0B1020</color>
+
+    <color name="chip_bg">#00000000</color>
+    <color name="chip_selected_bg">#24304C</color>
+    <color name="key_bg">#23272E</color>
+    <color name="key_pressed">#2F3A55</color>
+    <color name="input_bg">#1E2228</color>
+
+    <color name="ok">#7ADB9A</color>
+    <color name="warn">#F5C06B</color>
+    <color name="err">#FF8A80</color>
+    <color name="shadow">#66000000</color>
+</resources>

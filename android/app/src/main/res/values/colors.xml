@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 浅色主题配色: 冷灰底 + 单一主色(蓝), 卡片用白色浮起 -->
+<resources>
+    <color name="bg">#F4F6F9</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface_variant">#EDF1F6</color>
+    <color name="text">#14161A</color>
+    <color name="text_dim">#6B7280</color>
+    <color name="outline">#DDE2E9</color>
+
+    <color name="primary">#2F5FE0</color>
+    <color name="primary_pressed">#2750BE</color>
+    <color name="primary_disabled">#AFC0EE</color>
+    <color name="primary_dark">#24479F</color>
+    <color name="on_primary">#FFFFFFFF</color>
+
+    <color name="chip_bg">#00000000</color>
+    <color name="chip_selected_bg">#E3EAFD</color>
+    <color name="key_bg">#FFFFFFFF</color>
+    <color name="key_pressed">#E3EAFD</color>
+    <color name="input_bg">#FFFFFFFF</color>
+
+    <color name="ok">#1E8E3E</color>
+    <color name="warn">#B26A00</color>
+    <color name="err">#C5221F</color>
+    <color name="shadow">#14000000</color>
+</resources>
