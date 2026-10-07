@@ -1,0 +1,69 @@
+# EasyMath 配置示例 / example configuration
+# 安装后复制到 ~/.easymath.conf (Linux/macOS) 或 %USERPROFILE%\.easymath.conf (Windows)
+# 语法: key = value, 行尾可用 '#' 注释
+
+lang = zh                  # zh | en
+decimals = 8               # 小数位数 (0..200)
+saveDir = .                # 保存 HTML/Markdown 的目录
+useDefaultName = true      # 是否使用默认命名
+nameTemplate = 函数 {date} {n}   # 占位: {date} {n} {mode} {time}
+overwrite = false          # false: 重名时加 (1); true: 直接覆盖并提示
+saveHtml = false           # 非交互模式默认是否保存
+askSave = true             # 交互模式是否询问保存
+saveMarkdownAlso = true
+mathjax = true             # HTML 中引入 MathJax
+prettyUnicode = true
+exactPreferred = true
+degreesDefault = true      # 直线模式默认角度制
+realOnly = false
+complex = true
+separator =
+scientific = auto          # auto | always | never  科学计数法策略
+constants =                # 解方程: 把这些字母当常量(不求解), 逗号分隔, 如 a,b,c
+derive =                   # 解方程: 由解反推这些表达式的值(派生量), 逗号分隔, 如 abc,xy
+numericInequality = auto   # auto | always | never  不等式数值解集策略(周期函数用数值求根;
+                           #   auto=只处理单条周期关系, always=多条也算(漏解风险更高), never=不用数值方法)
+sciThreshold = 12          # |v| >= 10^n 时用科学计数法
+
+# --- 求解引擎 ---
+engine = auto              # auto | builtin | sympy
+python = python3
+engineTimeout = 15000      # 外部引擎超时(毫秒)
+
+# --- 数值后端 (编译期探测, 运行期可切换) ---
+bigint = gmp               # auto | gmp | builtin
+hpfloat = mpfr             # auto | mpfr | sympy | builtin
+precision = 0              # MPFR 精度(位), 0 = 按 decimals 自动
+
+# --- 输出通道开关 (1 开 / 0 关) ---
+out.banner = 1
+out.input = 1
+out.normalized = 1
+out.note = 1
+out.step = 0
+out.lagrange = 1
+out.polynomial = 1
+out.plain = 1
+out.decimal = 1
+out.approx = 1
+out.latex = 1
+out.markdown = 0
+out.html = 0
+out.solution = 1
+out.verify = 1
+out.file = 1
+out.prompt = 1
+out.tip = 1
+
+# ---- 字形模式(文字 → 函数) ----
+# 字体包: .zip(里面放 .ttf)或单个 .ttf; 留空则自动找 ~/Math/vivo_Sans.zip
+fontPack =
+# 选字体: 留空 = 默认 vivo Sans 的 Regular(vivoSans-Regular.ttf);
+#          也可填序号(见 --font-list)或名字子串(同家族里优先 Regular)
+font =
+# 字号(输出坐标单位)
+glyphSize = 1000
+# 拟合容差(字体单位): 越大函数越少, 越小越贴合; 无论多大都不会比字体自带分段多
+glyphTol = 0.5
+# 左下角坐标: (x,x) / (x , x) / (x x) / x x / x,x 都认; 前缀 : 表示左右镜像
+anchor = (0,0)

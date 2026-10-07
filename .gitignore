@@ -1,0 +1,60 @@
+# ---------- 构建产物 ----------
+build/
+build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.o
+*.a
+*.so
+*.dll
+*.obj
+*.exe
+*.out
+obj/
+bin/
+Release/
+Debug/
+
+# ---------- 打包/发行产物(二进制走 GitHub Release, 不进仓库) ----------
+dist/
+*.apk
+*.aab
+*.tar.gz
+*.tar.xz
+*.zip
+
+# ---------- Android ----------
+android/.gradle/
+android/build/
+android/app/build/
+android/.cxx/
+android/app/.cxx/
+android/local.properties
+android/.idea/
+android/captures/
+.gradle/
+*.keystore
+*.jks
+
+# ---------- Python / 解释器缓存 ----------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ---------- 临时/测试残留 ----------
+/tmp/
+*.log
+/tmp/*.txt
+方程.txt
+函数 *.html
+函数 *.md
+bug/
+vivo_Sans.zip
+
+# ---------- 编辑器/系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
