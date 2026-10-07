@@ -23,7 +23,7 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j"$(nproc)"
           sudo cmake --install build
-          /opt/EasyMath/bin/EasyMath --version
+          build/EasyMath --version
       - name: Full test suite
         run: bash tests/run_all.sh build/EasyMath
       - name: Check pi to 100 digits
