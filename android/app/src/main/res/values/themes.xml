@@ -12,8 +12,8 @@
         <item name="android:textColorPrimary">@color/text</item>
         <item name="android:textColorSecondary">@color/text_dim</item>
         <item name="android:textColorHint">@color/text_dim</item>
-        <item name="android:scrollbarThumbVertical">@android:color/transparent</item>
-        <item name="android:scrollbarTrackVertical">@android:color/transparent</item>
+        <item name="android:scrollbarThumbVertical">@drawable/scrollbar_transparent</item>
+        <item name="android:scrollbarTrackVertical">@drawable/scrollbar_transparent</item>
         <item name="android:scrollbarFadeDuration">0</item>
     </style>
 </resources>

@@ -395,7 +395,9 @@ public class MainActivity extends Activity {
                 | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         input.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         // 多行输入框要能自己上下滚: 打开滚动条, 并在手指落在输入框上时让父滚动容器别抢手势
-        input.setVerticalScrollBarEnabled(true);
+        // 1.63.2 真凶: 这里原本是 true —— 输入框显式开了滚动条, 但它的 ScrollBarDrawable 在
+        // Android 16 上是 null, 一绘制就 NPE(崩溃栈: View.onDrawScrollBars -> ScrollView.draw)。
+        input.setVerticalScrollBarEnabled(false);
         input.setScrollbarFadingEnabled(false);
         input.setOnTouchListener((v, ev) -> {
             if (ev.getActionMasked() == android.view.MotionEvent.ACTION_DOWN
