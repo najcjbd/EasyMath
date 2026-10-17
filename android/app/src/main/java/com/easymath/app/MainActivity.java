@@ -170,12 +170,15 @@ public class MainActivity extends Activity {
             setContentView(fatalView(t));
             return;
         }
+        // 设置读取全部做类型容错: 旧版本可能把某个键存成了不同类型, 直接 getInt/getBoolean
+        // 会抛 ClassCastException, 开屏即崩(1.62.7 实测定位到这一段)。
         prefs = getSharedPreferences("easymath", MODE_PRIVATE);
-        engineSetting = prefs.getString("engine", "auto");
-        sciSetting = prefs.getString("scientific", "auto");
-        ineqSetting = prefs.getString("numericInequality", "auto");
-        realOnly = prefs.getBoolean("realOnly", false);
-        decimalsCustom = prefs.getInt("decimalsCustom", 0);
+        engineSetting = prefString(prefs, "engine", "auto");
+        sciSetting = prefString(prefs, "scientific", "auto");
+        ineqSetting = prefString(prefs, "numericInequality", "auto");
+        realOnly = prefBool(prefs, "realOnly", false);
+        decimalsCustom = prefInt(prefs, "decimalsCustom", 0);
+        bootStage("3b: 设置读取完成");
         setContentView(buildUi());
         String lastCrash = readLastCrash();
         String lastStage = readFileQuietly(new java.io.File(getFilesDir(), "boot_stage.txt")).trim();
@@ -228,6 +231,31 @@ public class MainActivity extends Activity {
             } catch (Throwable ignored) { }
             if (prev != null) prev.uncaughtException(t, e);
         });
+    }
+
+    /** 设置读取的类型容错(任何类型不匹配都退回默认值, 不抛异常) */
+    private static String prefString(android.content.SharedPreferences p, String key, String def) {
+        try { Object v = p.getAll().get(key); return v == null ? def : String.valueOf(v); }
+        catch (Throwable t) { return def; }
+    }
+
+    private static boolean prefBool(android.content.SharedPreferences p, String key, boolean def) {
+        try {
+            Object v = p.getAll().get(key);
+            if (v instanceof Boolean) return (Boolean) v;
+            if (v instanceof String) return Boolean.parseBoolean((String) v);
+            return def;
+        } catch (Throwable t) { return def; }
+    }
+
+    private static int prefInt(android.content.SharedPreferences p, String key, int def) {
+        try {
+            Object v = p.getAll().get(key);
+            if (v instanceof Integer) return (Integer) v;
+            if (v instanceof String) return Integer.parseInt((String) v);
+            if (v instanceof Long) return (int) (long) (Long) v;
+            return def;
+        } catch (Throwable t) { return def; }
     }
 
     /** 用 Toast 显示上次启动停在哪一步/上次崩溃(开屏即可见, 不需要看私有目录) */
