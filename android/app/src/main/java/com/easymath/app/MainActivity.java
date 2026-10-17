@@ -671,7 +671,11 @@ public class MainActivity extends Activity {
         int start = 2; // eval
         for (int i = 0; i < MODES.length; i++) if (MODES[i].equals(mode)) start = i;
         selectMode(start, chips);
-        disableScrollbarsDeep(outer);   // 1.63.3: 整棵树上关掉滚动条(修 Android 16 NPE)
+        disableScrollbarsDeep(outer);   // 首次扫描(修 Android 16 的 onDrawScrollBars NPE)
+        // 1.63.5: 有些子视图(典型是 WebView 内部)是在首次扫描之后才加进树里的,
+        // 所以每次布局完成都重新扫一遍, 保证新加进来的控件也不会带着滚动条去绘制。
+        outer.getViewTreeObserver().addOnGlobalLayoutListener(
+                () -> disableScrollbarsDeep(outer));
         return outer;
     }
 
