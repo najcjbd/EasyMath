@@ -1,20 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:name=".App"
+        android:name="android.app.Application"
         android:label="EasyMath"
         android:allowBackup="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.EasyMath">
+
+        <!-- 最小探针: 只有一个纯文本界面(不碰 Python/原生库/WebView/复杂布局)。
+             如果它都闪退, 问题在 Application/主题/Manifest 层。 -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|keyboardHidden">
+            android:name=".ProbeActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- 正式界面(本探针版本里不是入口, 供后续恢复) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|keyboardHidden"/>
     </application>
 </manifest>
