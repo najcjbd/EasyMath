@@ -225,6 +225,23 @@ public class MainActivity extends Activity {
         });
     }
 
+    /**
+     * 1.63.3: 递归关闭整棵视图树上的滚动条。
+     * Android 16 上某些控件的 ScrollBarDrawable 为 null, 绘制时 View.onDrawScrollBars
+     * 对它调 mutate() 会抛 NPE; 统一关闭滚动条后不再走这段绘制代码。
+     */
+    private static void disableScrollbarsDeep(android.view.View v) {
+        if (v == null) return;
+        try {
+            v.setVerticalScrollBarEnabled(false);
+            v.setHorizontalScrollBarEnabled(false);
+        } catch (Throwable ignored) { }
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); ++i) disableScrollbarsDeep(g.getChildAt(i));
+        }
+    }
+
     /** 设置读取的类型容错(任何类型不匹配都退回默认值, 不抛异常) */
     private static String prefString(android.content.SharedPreferences p, String key, String def) {
         try { Object v = p.getAll().get(key); return v == null ? def : String.valueOf(v); }
@@ -654,6 +671,7 @@ public class MainActivity extends Activity {
         int start = 2; // eval
         for (int i = 0; i < MODES.length; i++) if (MODES[i].equals(mode)) start = i;
         selectMode(start, chips);
+        disableScrollbarsDeep(outer);   // 1.63.3: 整棵树上关掉滚动条(修 Android 16 NPE)
         return outer;
     }
 
