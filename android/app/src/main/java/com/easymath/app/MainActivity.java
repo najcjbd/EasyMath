@@ -158,62 +158,54 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        bootStage("1: super.onCreate 完成");
-        try { toastDiag(); bootStage("1a: Toast 诊断完成"); }
-        catch (Throwable t) { bootStage("1a: Toast 诊断失败 " + t.getClass().getSimpleName()); }
-        try { installCrashRecorder(); bootStage("2: 崩溃记录器已装"); }
-        catch (Throwable t) { bootStage("2: 崩溃记录器失败 " + t.getClass().getSimpleName()); }
+        // 先设一个"最稳"的纯文本视图: 不依赖复杂布局/WebView/弹窗, 任何机型都不会因为它崩。
+        // 然后才尝试初始化; 一旦抛异常, 把**真实异常**贴在屏幕上(不再吞掉、不再白屏)。
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setTextIsSelectable(true);
+        int pad = (int) (14 * getResources().getDisplayMetrics().density);
+        tv.setPadding(pad, pad, pad, pad);
+        StringBuilder diag = new StringBuilder("EasyMath 启动检查\n");
+        String prevStage = "", prevCrash = "";
         try {
-            NativeBridge.init(getApplicationContext()); // 兜底启动 Python 用
+            prevStage = readFileQuietly(new java.io.File(getFilesDir(), "boot_stage.txt")).trim();
+            prevCrash = readFileQuietly(new java.io.File(getFilesDir(), "native_crash.txt"));
+            if (prevCrash == null || prevCrash.isEmpty())
+                prevCrash = readFileQuietly(new java.io.File(getFilesDir(), "last_crash.txt"));
+        } catch (Throwable ignored) { }
+        if (!prevStage.isEmpty()) diag.append("上次启动停: ").append(prevStage.replace('\n', ' ')).append('\n');
+        if (prevCrash != null && !prevCrash.isEmpty()) diag.append("\n上次崩溃信息:\n").append(prevCrash).append('\n');
+        tv.setText(diag.toString());
+        setContentView(tv);
+        // ---- 到这里界面一定显示了; 下面每步失败都会把异常原文贴出来 ----
+        try {
+            bootStage("2: 开始 NativeBridge.init");
+            try { installCrashRecorder(); } catch (Throwable t) { diag.append("installCrashRecorder 失败: ").append(t).append('\n'); }
+            NativeBridge.init(getApplicationContext());
             bootStage("3: NativeBridge.init 完成");
-        } catch (Throwable t) {
-            setContentView(fatalView(t));
-            return;
-        }
-        // 设置读取全部做类型容错: 旧版本可能把某个键存成了不同类型, 直接 getInt/getBoolean
-        // 会抛 ClassCastException, 开屏即崩(1.62.7 实测定位到这一段)。
-        prefs = getSharedPreferences("easymath", MODE_PRIVATE);
-        engineSetting = prefString(prefs, "engine", "auto");
-        sciSetting = prefString(prefs, "scientific", "auto");
-        ineqSetting = prefString(prefs, "numericInequality", "auto");
-        realOnly = prefBool(prefs, "realOnly", false);
-        decimalsCustom = prefInt(prefs, "decimalsCustom", 0);
-        bootStage("3b: 设置读取完成");
-        setContentView(buildUi());
-        String lastCrash = readLastCrash();
-        String lastStage = readFileQuietly(new java.io.File(getFilesDir(), "boot_stage.txt")).trim();
-        if (!lastStage.isEmpty() && !lastStage.startsWith("6") && !lastStage.startsWith("5")) {
-            setStatus("上次启动停在: " + lastStage, R.color.text);
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("启动阶段（可长按复制）")
-                .setMessage("上次启动停在这一步:\n" + lastStage +
-                            "\n\n如果后面还跟着[原生]崩溃信息, 那多半就是这一步附近崩的。")
-                .setPositiveButton("好", null).show();
-        }
-        String nativeCrash = readFileQuietly(new java.io.File(getFilesDir(), "native_crash.txt"));
-        if (lastCrash != null && !lastCrash.isEmpty()) {
-            setStatus("上次崩溃了（详情见日志）", R.color.text);
-            android.util.Log.e("EasyMath", "上次崩溃:\n" + lastCrash);
-        } else if (!NativeBridge.loadError.isEmpty()) {
-            setStatus("原生库加载失败: " + NativeBridge.loadError, R.color.text);
-        } else {
+            prefs = getSharedPreferences("easymath", MODE_PRIVATE);
+            engineSetting = prefString(prefs, "engine", "auto");
+            sciSetting = prefString(prefs, "scientific", "auto");
+            ineqSetting = prefString(prefs, "numericInequality", "auto");
+            realOnly = prefBool(prefs, "realOnly", false);
+            decimalsCustom = prefInt(prefs, "decimalsCustom", 0);
+            bootStage("3b: 设置读取完成");
+            bootStage("4: 开始 buildUi");
+            android.view.View ui = buildUi();
+            bootStage("4a: buildUi 返回");
+            setContentView(ui);
+            bootStage("5: setContentView 完成");
             setStatus("就绪", R.color.text_dim);
-        }
-        showPlaceholder();
-        bootStage("6: 界面已显示");
-        if (nativeCrash != null && !nativeCrash.isEmpty()) {
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("上次的[原生]崩溃信息（可长按复制）")
-                .setMessage(nativeCrash)
-                .setPositiveButton("好", null)
-                .show();
-        }
-        if (lastCrash != null && !lastCrash.isEmpty()) {
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("上次的崩溃信息（可长按复制）")
-                .setMessage(lastCrash)
-                .setPositiveButton("好", null)
-                .show();
+            showPlaceholder();
+            bootStage("6: 界面已显示");
+            if (diag.length() > 0 && diag.indexOf("上次") < 0) {
+                // 首次启动没有历史, 不打扰
+            }
+        } catch (Throwable t) {
+            // 真正的原因显示出来(用户可直接截图), 而不是闪退
+            String detail = android.util.Log.getStackTraceString(t);
+            bootStage("FAIL: " + t.getClass().getName());
+            tv.setText(diag + "\n启动失败(" + t.getClass().getSimpleName() + "):\n" + detail);
+            setContentView(tv);
         }
     }
 
