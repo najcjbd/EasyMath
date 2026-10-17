@@ -307,3 +307,59 @@ JNIEXPORT jstring JNICALL Java_com_easymath_app_NativeBridge_run(JNIEnv *env, jc
 }
 
 } // extern "C"
+
+// ---- 原生崩溃捕获: 没有 logcat 时把地址栈写进文件, 下次启动由 Java 读出显示 ----
+#include <csignal>
+#include <unistd.h>
+#include <fcntl.h>
+#include <unwind.h>
+#include <cstring>
+#include <cstdio>
+
+namespace {
+static char g_crashPath[512] = {0};
+struct BacktraceState { int fd; int n; };
+
+static _Unwind_Reason_Code unwindCb(struct _Unwind_Context *ctx, void *arg) {
+    BacktraceState *st = static_cast<BacktraceState *>(arg);
+    if (!st || st->fd < 0) return _URC_END_OF_STACK;
+    uintptr_t pc = _Unwind_GetIP(ctx);
+    if (pc) {
+        char buf[64];
+        int k = std::snprintf(buf, sizeof buf, "  #%02d  0x%llx\n", st->n, (unsigned long long)pc);
+        if (k > 0) { ssize_t w = ::write(st->fd, buf, (size_t) k); (void) w; }
+        ++st->n;
+    }
+    return st->n < 40 ? _URC_NO_REASON : _URC_END_OF_STACK;
+}
+
+static void crashHandler(int sig, siginfo_t *info, void *) {
+    int fd = g_crashPath[0] ? ::open(g_crashPath, O_WRONLY | O_CREAT | O_TRUNC, 0600) : -1;
+    if (fd >= 0) {
+        char head[200];
+        int k = std::snprintf(head, sizeof head, "原生崩溃 signal=%d addr=%p\n", sig, info ? info->si_addr : nullptr);
+        if (k > 0) { ssize_t w = ::write(fd, head, (size_t) k); (void) w; }
+        BacktraceState st{fd, 0};
+        _Unwind_Backtrace(unwindCb, &st);
+        ::close(fd);
+    }
+    ::signal(sig, SIG_DFL);
+    ::raise(sig);
+}
+} // namespace
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_easymath_app_NativeBridge_installNativeCrashHandler(JNIEnv *env, jclass, jstring jpath) {
+    if (jpath) {
+        const char *p = env->GetStringUTFChars(jpath, nullptr);
+        if (p) { std::strncpy(g_crashPath, p, sizeof(g_crashPath) - 1); env->ReleaseStringUTFChars(jpath, p); }
+    }
+    struct sigaction sa;
+    std::memset(&sa, 0, sizeof sa);
+    sa.sa_sigaction = crashHandler;
+    sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGSEGV, &sa, nullptr); sigaction(SIGABRT, &sa, nullptr);
+    sigaction(SIGBUS, &sa, nullptr);  sigaction(SIGILL, &sa, nullptr);
+    sigaction(SIGFPE, &sa, nullptr);
+}

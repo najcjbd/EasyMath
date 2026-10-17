@@ -173,6 +173,7 @@ public class MainActivity extends Activity {
         decimalsCustom = prefs.getInt("decimalsCustom", 0);
         setContentView(buildUi());
         String lastCrash = readLastCrash();
+        String nativeCrash = readFileQuietly(new java.io.File(getFilesDir(), "native_crash.txt"));
         if (lastCrash != null && !lastCrash.isEmpty()) {
             setStatus("上次崩溃了（详情见日志）", R.color.text);
             android.util.Log.e("EasyMath", "上次崩溃:\n" + lastCrash);
@@ -182,6 +183,13 @@ public class MainActivity extends Activity {
             setStatus("就绪", R.color.text_dim);
         }
         showPlaceholder();
+        if (nativeCrash != null && !nativeCrash.isEmpty()) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("上次的[原生]崩溃信息（可长按复制）")
+                .setMessage(nativeCrash)
+                .setPositiveButton("好", null)
+                .show();
+        }
         if (lastCrash != null && !lastCrash.isEmpty()) {
             new android.app.AlertDialog.Builder(this)
                 .setTitle("上次的崩溃信息（可长按复制）")
@@ -205,6 +213,17 @@ public class MainActivity extends Activity {
             } catch (Throwable ignored) { }
             if (prev != null) prev.uncaughtException(t, e);
         });
+    }
+
+    /** 读文件但不删除(原生崩溃记录用) */
+    private String readFileQuietly(java.io.File f) {
+        try {
+            if (!f.exists()) return "";
+            byte[] buf = new byte[(int) f.length()];
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            int n = in.read(buf); in.close();
+            return n > 0 ? new String(buf, 0, n) : "";
+        } catch (Throwable t) { return ""; }
     }
 
     /** 把上次崩溃的堆栈读出来(没有就返回空串) */

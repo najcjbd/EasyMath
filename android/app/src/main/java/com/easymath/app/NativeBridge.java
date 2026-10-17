@@ -25,6 +25,10 @@ public final class NativeBridge {
     /** 由 MainActivity 在 onCreate 里调用, 供"兜底启动 Python"使用 */
     public static void init(Context ctx) {
         if (ctx != null) appContext = ctx.getApplicationContext();
+        try {
+            if (loadError != null && loadError.isEmpty() && appContext != null)
+                installNativeCrashHandler(new java.io.File(appContext.getFilesDir(), "native_crash.txt").getAbsolutePath());
+        } catch (Throwable t) { Log.e(TAG, "installNativeCrashHandler 失败", t); }
     }
 
     /** 确保 Chaquopy 的 Python 已启动(必须用 AndroidPlatform, 不能用默认的 GenericPlatform) */
@@ -36,6 +40,9 @@ public final class NativeBridge {
         com.chaquo.python.Python.start(
                 new com.chaquo.python.android.AndroidPlatform(appContext));
     }
+
+    /** 装原生崩溃处理器: 崩溃时把地址栈写到 path(下次启动显示) */
+    public static native void installNativeCrashHandler(String path);
 
     public static native String version();
 
