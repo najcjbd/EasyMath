@@ -158,7 +158,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        NativeBridge.init(getApplicationContext()); // 兜底启动 Python 用
+        installCrashRecorder();
+        try {
+            NativeBridge.init(getApplicationContext()); // 兜底启动 Python 用
+        } catch (Throwable t) {
+            setContentView(fatalView(t));
+            return;
+        }
         prefs = getSharedPreferences("easymath", MODE_PRIVATE);
         engineSetting = prefs.getString("engine", "auto");
         sciSetting = prefs.getString("scientific", "auto");
@@ -166,8 +172,69 @@ public class MainActivity extends Activity {
         realOnly = prefs.getBoolean("realOnly", false);
         decimalsCustom = prefs.getInt("decimalsCustom", 0);
         setContentView(buildUi());
-        setStatus("就绪", R.color.text_dim);
+        String lastCrash = readLastCrash();
+        if (lastCrash != null && !lastCrash.isEmpty()) {
+            setStatus("上次崩溃了（详情见日志）", R.color.text);
+            android.util.Log.e("EasyMath", "上次崩溃:\n" + lastCrash);
+        } else if (!NativeBridge.loadError.isEmpty()) {
+            setStatus("原生库加载失败: " + NativeBridge.loadError, R.color.text);
+        } else {
+            setStatus("就绪", R.color.text_dim);
+        }
         showPlaceholder();
+        if (lastCrash != null && !lastCrash.isEmpty()) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("上次的崩溃信息（可长按复制）")
+                .setMessage(lastCrash)
+                .setPositiveButton("好", null)
+                .show();
+        }
+    }
+
+    /** 崩溃记录: 下次打开时直接在界面上显示原因(不用连电脑看 logcat) */
+    private void installCrashRecorder() {
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            try {
+                java.io.StringWriter sw = new java.io.StringWriter();
+                e.printStackTrace(new java.io.PrintWriter(sw));
+                java.io.File f = new java.io.File(getFilesDir(), "last_crash.txt");
+                java.io.FileWriter w = new java.io.FileWriter(f);
+                w.write(sw.toString());
+                w.close();
+            } catch (Throwable ignored) { }
+            if (prev != null) prev.uncaughtException(t, e);
+        });
+    }
+
+    /** 把上次崩溃的堆栈读出来(没有就返回空串) */
+    private String readLastCrash() {
+        try {
+            java.io.File f = new java.io.File(getFilesDir(), "last_crash.txt");
+            if (!f.exists()) return "";
+            byte[] buf = new byte[(int) f.length()];
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            int n = in.read(buf);
+            in.close();
+            f.delete();
+            return n > 0 ? new String(buf, 0, n) : "";
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
+    /** 启动失败时的界面: 显示原因(而不是白屏/闪退) */
+    private android.view.View fatalView(Throwable t) {
+        java.io.StringWriter sw = new java.io.StringWriter();
+        t.printStackTrace(new java.io.PrintWriter(sw));
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText("EasyMath 启动失败，请把下面内容发给开发者：\n\n" + sw.toString());
+        tv.setTextIsSelectable(true);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        tv.setPadding(pad, pad, pad, pad);
+        sv.addView(tv);
+        return sv;
     }
 
     // ==================== 界面 ====================

@@ -9,8 +9,15 @@ public final class NativeBridge {
     /** 启动内嵌 Python 需要 Context(正常由 PyApplication 启动, 这里只做兜底) */
     private static Context appContext;
 
+    /** 原生库加载失败时记下原因(不抛, 让界面能把原因显示出来, 而不是白屏闪退) */
+    public static String loadError = "";
     static {
-        System.loadLibrary("easymath");
+        try {
+            System.loadLibrary("easymath");
+        } catch (Throwable t) {
+            loadError = String.valueOf(t);
+            Log.e(TAG, "loadLibrary(easymath) 失败", t);
+        }
     }
 
     private NativeBridge() {}

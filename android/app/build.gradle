@@ -12,8 +12,8 @@ android {
         applicationId 'com.easymath.app'
         minSdk 24
         targetSdk 36
-        versionCode 63
-        versionName '1.62.0'  // 1.62.0: OTF 全 ASCII 冒烟通过(94 字/3775 段) + mingw 构建修正
+        versionCode 64
+        versionName '1.62.1'  // 1.62.1: 崩溃自证(堆栈落盘+下次启动弹窗) + 启动失败不再白屏闪退
         ndk { abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64' }
 
         // 内嵌 CPython + SymPy: 手机端与桌面端同一个求解引擎
