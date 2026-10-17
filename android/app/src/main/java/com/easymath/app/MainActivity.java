@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
     private Button runBtn;
     private Button cancelBtn;
     /** 整页滚动容器(会把结果区的手势让给 WebView, 见 PageScrollView) */
-    private PageScrollView page;
+    private android.widget.ScrollView page;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -339,7 +339,7 @@ public class MainActivity extends Activity {
         outer.setPadding(pad, 0, pad, pad);
         applyInsets(outer, pad);
 
-        page = new PageScrollView(this);
+        page = new android.widget.ScrollView(this);   // 1.63.0: 普通 ScrollView 替代自定义 PageScrollView
         page.setClipToPadding(false);
         page.setFillViewport(false);
         LinearLayout root = new LinearLayout(this); // 页面内容
@@ -637,7 +637,7 @@ public class MainActivity extends Activity {
                 v.post(poll[0]);
             }
         });
-        page.setInnerScrollable(result); // 结果区手势优先给 WebView, 到边缘再交给整页
+        // 1.63.0: 不再把结果区手势交给 WebView
         resultCard.addView(result, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         // 结果卡片给固定高度: 高度比例与之前一致(屏幕 46%), 长结果由 WebView 自己滚
