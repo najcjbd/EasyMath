@@ -7,22 +7,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EasyMath">
 
-        <!-- 最小探针: 只有一个纯文本界面(不碰 Python/原生库/WebView/复杂布局)。
-             如果它都闪退, 问题在 Application/主题/Manifest 层。 -->
-        <activity
-            android:name=".ProbeActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".WebProbeActivity"
-            android:exported="false"/>
-
-        <!-- 正式界面(本探针版本里不是入口, 供后续恢复) -->
+        <!-- 1.63.0: 正式界面恢复为唯一入口 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -33,5 +18,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- 诊断用探针(非入口) -->
+        <activity android:name=".ProbeActivity" android:exported="false"/>
+        <activity android:name=".WebProbeActivity" android:exported="false"/>
     </application>
 </manifest>
