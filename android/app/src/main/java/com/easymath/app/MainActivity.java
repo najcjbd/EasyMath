@@ -159,6 +159,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         bootStage("1: super.onCreate 完成");
+        toastDiag();
         installCrashRecorder();
         bootStage("2: 崩溃记录器已装");
         try {
@@ -226,6 +227,27 @@ public class MainActivity extends Activity {
             } catch (Throwable ignored) { }
             if (prev != null) prev.uncaughtException(t, e);
         });
+    }
+
+    /** 用 Toast 显示上次启动停在哪一步/上次崩溃(开屏即可见, 不需要看私有目录) */
+    private void toastDiag() {
+        try {
+            String stage = readFileQuietly(new java.io.File(getFilesDir(), "boot_stage.txt")).trim();
+            String nativeCrash = readFileQuietly(new java.io.File(getFilesDir(), "native_crash.txt")).trim();
+            String javaCrash = readFileQuietly(new java.io.File(getFilesDir(), "last_crash.txt")).trim();
+            StringBuilder sb = new StringBuilder();
+            if (!stage.isEmpty() && !stage.startsWith("6")) {
+                sb.append("上次启动停在: ").append(stage.replace('\n', ' ')).append("\n");
+            }
+            if (!nativeCrash.isEmpty()) sb.append("[原生崩溃] ").append(nativeCrash.substring(0, Math.min(500, nativeCrash.length()))).append("\n");
+            if (!javaCrash.isEmpty() && sb.length() == 0) sb.append("[Java 崩溃] ").append(javaCrash.substring(0, Math.min(400, javaCrash.length())));
+            if (sb.length() > 0) {
+                android.widget.Toast.makeText(this, sb.toString(), android.widget.Toast.LENGTH_LONG).show();
+            }
+            // 同时把两处崩溃文件改名(只报一次), 阶段文件保留以便下次再报
+            if (!nativeCrash.isEmpty()) new java.io.File(getFilesDir(), "native_crash.txt").renameTo(new java.io.File(getFilesDir(), "native_crash.old"));
+            if (!javaCrash.isEmpty()) new java.io.File(getFilesDir(), "last_crash.txt").renameTo(new java.io.File(getFilesDir(), "last_crash.old"));
+        } catch (Throwable ignored) { }
     }
 
     /** 启动阶段打点: 每次覆盖写当前阶段(下次启动据此知道上次停在哪) */
