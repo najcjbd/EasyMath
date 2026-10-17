@@ -12,7 +12,7 @@
 
 namespace em {
 
-const char *kVersion = "1.63.2";
+const char *kVersion = "1.63.4";
 
 // 小数位上限: <=200 走原来的(内置/SymPy)算法; >200 走高精度特殊算法,
 // 拿不出那么多位就钳到本机能精确的最大位数(见 modes.cpp 的 clampDecimals)
