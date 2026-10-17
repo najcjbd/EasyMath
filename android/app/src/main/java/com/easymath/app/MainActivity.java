@@ -340,6 +340,10 @@ public class MainActivity extends Activity {
         applyInsets(outer, pad);
 
         page = new android.widget.ScrollView(this);   // 1.63.0: 普通 ScrollView 替代自定义 PageScrollView
+        // 1.63.1 真凶修复: Android 16 上 View.onDrawScrollBars 会因滚动条 drawable 为 null 抛 NPE,
+        // 关掉滚动条绘制即可(视觉上本来也不需要滚动条)。
+        page.setVerticalScrollBarEnabled(false);
+        page.setHorizontalScrollBarEnabled(false);
         page.setClipToPadding(false);
         page.setFillViewport(false);
         LinearLayout root = new LinearLayout(this); // 页面内容
@@ -1113,6 +1117,7 @@ public class MainActivity extends Activity {
         row.addView(clr);
         wrap.addView(row);
         ScrollView drawScroll = new ScrollView(this);
+        drawScroll.setVerticalScrollBarEnabled(false);
         drawScroll.setFillViewport(true);
         drawScroll.addView(wrap);
         new AlertDialog.Builder(this)
