@@ -158,9 +158,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        bootStage("1: super.onCreate 完成");
         installCrashRecorder();
+        bootStage("2: 崩溃记录器已装");
         try {
             NativeBridge.init(getApplicationContext()); // 兜底启动 Python 用
+            bootStage("3: NativeBridge.init 完成");
         } catch (Throwable t) {
             setContentView(fatalView(t));
             return;
@@ -173,6 +176,15 @@ public class MainActivity extends Activity {
         decimalsCustom = prefs.getInt("decimalsCustom", 0);
         setContentView(buildUi());
         String lastCrash = readLastCrash();
+        String lastStage = readFileQuietly(new java.io.File(getFilesDir(), "boot_stage.txt")).trim();
+        if (!lastStage.isEmpty() && !lastStage.startsWith("6") && !lastStage.startsWith("5")) {
+            setStatus("上次启动停在: " + lastStage, R.color.text);
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("启动阶段（可长按复制）")
+                .setMessage("上次启动停在这一步:\n" + lastStage +
+                            "\n\n如果后面还跟着[原生]崩溃信息, 那多半就是这一步附近崩的。")
+                .setPositiveButton("好", null).show();
+        }
         String nativeCrash = readFileQuietly(new java.io.File(getFilesDir(), "native_crash.txt"));
         if (lastCrash != null && !lastCrash.isEmpty()) {
             setStatus("上次崩溃了（详情见日志）", R.color.text);
@@ -183,6 +195,7 @@ public class MainActivity extends Activity {
             setStatus("就绪", R.color.text_dim);
         }
         showPlaceholder();
+        bootStage("6: 界面已显示");
         if (nativeCrash != null && !nativeCrash.isEmpty()) {
             new android.app.AlertDialog.Builder(this)
                 .setTitle("上次的[原生]崩溃信息（可长按复制）")
@@ -213,6 +226,16 @@ public class MainActivity extends Activity {
             } catch (Throwable ignored) { }
             if (prev != null) prev.uncaughtException(t, e);
         });
+    }
+
+    /** 启动阶段打点: 每次覆盖写当前阶段(下次启动据此知道上次停在哪) */
+    private void bootStage(String stage) {
+        try {
+            java.io.FileOutputStream out = new java.io.FileOutputStream(
+                    new java.io.File(getFilesDir(), "boot_stage.txt"), false);
+            out.write((stage + "\n").getBytes("UTF-8"));
+            out.close();
+        } catch (Throwable ignored) { }
     }
 
     /** 读文件但不删除(原生崩溃记录用) */
