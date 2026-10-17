@@ -45,6 +45,12 @@ public class ProbeActivity extends Activity {
         go.setText("计算");
         root.addView(go);
 
+        Button webProbe = new Button(this);
+        webProbe.setText("测 WebView（点开看会不会闪退）");
+        webProbe.setOnClickListener(v ->
+                startActivity(new android.content.Intent(this, WebProbeActivity.class)));
+        root.addView(webProbe);
+
         output = new TextView(this);
         output.setTextIsSelectable(true);
         output.setTextSize(16);

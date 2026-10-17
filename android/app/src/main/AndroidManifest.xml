@@ -18,6 +18,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".WebProbeActivity"
+            android:exported="false"/>
+
         <!-- 正式界面(本探针版本里不是入口, 供后续恢复) -->
         <activity
             android:name=".MainActivity"
