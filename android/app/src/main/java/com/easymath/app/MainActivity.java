@@ -159,9 +159,10 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         bootStage("1: super.onCreate 完成");
-        toastDiag();
-        installCrashRecorder();
-        bootStage("2: 崩溃记录器已装");
+        try { toastDiag(); bootStage("1a: Toast 诊断完成"); }
+        catch (Throwable t) { bootStage("1a: Toast 诊断失败 " + t.getClass().getSimpleName()); }
+        try { installCrashRecorder(); bootStage("2: 崩溃记录器已装"); }
+        catch (Throwable t) { bootStage("2: 崩溃记录器失败 " + t.getClass().getSimpleName()); }
         try {
             NativeBridge.init(getApplicationContext()); // 兜底启动 Python 用
             bootStage("3: NativeBridge.init 完成");
@@ -242,7 +243,9 @@ public class MainActivity extends Activity {
             if (!nativeCrash.isEmpty()) sb.append("[原生崩溃] ").append(nativeCrash.substring(0, Math.min(500, nativeCrash.length()))).append("\n");
             if (!javaCrash.isEmpty() && sb.length() == 0) sb.append("[Java 崩溃] ").append(javaCrash.substring(0, Math.min(400, javaCrash.length())));
             if (sb.length() > 0) {
-                android.widget.Toast.makeText(this, sb.toString(), android.widget.Toast.LENGTH_LONG).show();
+                try {
+                    android.widget.Toast.makeText(getApplicationContext(), sb.toString(), android.widget.Toast.LENGTH_LONG).show();
+                } catch (Throwable ignored) { }
             }
             // 同时把两处崩溃文件改名(只报一次), 阶段文件保留以便下次再报
             if (!nativeCrash.isEmpty()) new java.io.File(getFilesDir(), "native_crash.txt").renameTo(new java.io.File(getFilesDir(), "native_crash.old"));
