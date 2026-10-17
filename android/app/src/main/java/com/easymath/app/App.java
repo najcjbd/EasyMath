@@ -1,32 +1,28 @@
 package com.easymath.app;
 
+import android.app.Application;
 import android.util.Log;
 
 /**
- * 应用入口: 继承 Chaquopy 官方的 PyApplication, 它会用 AndroidPlatform 启动内嵌 Python。
+ * 应用入口: 普通 Application(不再继承 Chaquopy 的 PyApplication)。
  *
- * 为什么必须有这个类: Chaquopy 17 的 Python.getInstance() 在 Python 未启动时会拿
- * GenericPlatform 去启动, 而 Android 上这是非法的(抛 "Cannot use GenericPlatform on
- * Android"), 结果所有 Python 调用都失败 —— 真机上表现为"引擎一直是内置、没有根式通解、
- * 没有 mpmath 任意精度", 而且异常被 Java 侧吞掉只剩一句 "python returned null"。
+ * 原因(1.62.3 修复): PyApplication.onCreate() 会**原生启动 libpython**。在某些设备/系统
+ * (例如 iQOO 15 / 新 Android)上这个原生启动会直接崩(SIGSEGV/SIGABRT), Java 的 try/catch
+ * 接不住, 表现为"打开先白屏、随后闪退", 而且连崩溃处理器都来不及安装。
  *
- * 这里额外兜住启动异常: 万一某台设备启动 Python 失败, 也只会退回内置引擎(并在
- * 「设置 → 后端自检」里显示原因), 而不是开屏崩溃。
+ * 现在改为**懒启动**: 打开 App 完全不碰 Python, 只有真正需要 SymPy 的运算才由
+ * NativeBridge.ensurePythonStarted() 启动; 启动失败只会退回内置引擎(并在后端自检里显示原因),
+ * 不会再让开屏崩掉。
  */
-public class App extends com.chaquo.python.android.PyApplication {
+public class App extends Application {
     private static final String TAG = "EasyMath";
 
-    /** Python 启动失败时的原因(供自检显示); 为空表示正常 */
+    /** Python 启动失败时的原因(供自检显示); 为空表示正常或尚未启动 */
     public static volatile String startupError = "";
 
     @Override
     public void onCreate() {
-        try {
-            super.onCreate(); // Python.start(new AndroidPlatform(this))
-        } catch (Throwable t) {
-            startupError = t.getClass().getSimpleName()
-                    + (t.getMessage() == null ? "" : ": " + t.getMessage());
-            Log.e(TAG, "内嵌 Python 启动失败, 将退回内置引擎", t);
-        }
+        super.onCreate();
+        Log.i(TAG, "App.onCreate: Python 懒启动, 开屏不碰 libpython");
     }
 }
